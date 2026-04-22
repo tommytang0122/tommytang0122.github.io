@@ -1,0 +1,45 @@
+---
+const items = [
+  {
+    school: 'DigiPen Institute of Technology',
+    date: '2020/09 – 2023/12',
+    degree: 'BS in Computer Science in Real-Time Interactive Simulation',
+    details: ['GPA: 3.7 / 4.0'],
+  },
+  {
+    school: 'National Taiwan University',
+    date: '2012/09 – 2018/06',
+    degree: 'BS in Chemical Engineering',
+    details: [] as string[],
+  },
+];
+---
+
+<section id="education" class="py-24">
+  <div class="mx-auto max-w-6xl px-6">
+    <h2 class="heading reveal">Education</h2>
+
+    <div class="mt-10 grid gap-6 md:grid-cols-2">
+      {
+        items.map((it) => (
+          <article class="reveal rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-lg">
+            <h3 class="text-xl">{it.school}</h3>
+            <time class="mt-1 block text-sm uppercase tracking-[0.15em] text-[var(--color-muted)]">
+              {it.date}
+            </time>
+            <p class="mt-3 text-[var(--color-base)] font-medium uppercase tracking-wide text-sm">
+              {it.degree}
+            </p>
+            {it.details.length > 0 && (
+              <ul class="mt-3 list-disc pl-5 text-[var(--color-text)]">
+                {it.details.map((d) => (
+                  <li>{d}</li>
+                ))}
+              </ul>
+            )}
+          </article>
+        ))
+      }
+    </div>
+  </div>
+</section>
