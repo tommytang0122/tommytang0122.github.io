@@ -1,0 +1,147 @@
+---
+const name = 'Tommy Tang';
+const tagline = 'Game Programmer';
+const subline = 'Gameplay · AI · Graphics · Engine Programming';
+---
+
+<section id="top" class="relative flex min-h-[100svh] items-center justify-center overflow-hidden">
+  <canvas
+    id="hero-canvas"
+    class="absolute inset-0 h-full w-full"
+    aria-hidden="true"
+  ></canvas>
+  <div class="absolute inset-0 bg-gradient-to-b from-[var(--color-bg)]/40 via-[var(--color-bg)]/60 to-[var(--color-bg)]"></div>
+
+  <div class="relative z-10 text-center px-6">
+    <h1 class="text-5xl md:text-7xl font-black tracking-tight text-[var(--color-heading)]">
+      {name}
+    </h1>
+    <h2 class="mt-3 text-xl md:text-2xl font-light tracking-wide text-[var(--color-base)]">
+      {tagline}
+    </h2>
+    <p class="mt-2 text-sm md:text-base uppercase tracking-[0.2em] text-[var(--color-muted)]">
+      {subline}
+    </p>
+    <div class="mt-10 flex items-center justify-center gap-4">
+      <a href="/resume.pdf" target="_blank" class="btn-primary">Download Resume</a>
+      <a href="#projects" class="btn-primary">View Projects</a>
+    </div>
+  </div>
+
+  <a
+    href="#about"
+    aria-label="Scroll to about"
+    class="absolute bottom-8 left-1/2 z-10 -translate-x-1/2 animate-bounce text-[var(--color-heading)]/70"
+  >
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <polyline points="6 9 12 15 18 9"></polyline>
+    </svg>
+  </a>
+</section>
+
+<script>
+  const canvas = document.getElementById('hero-canvas') as HTMLCanvasElement | null;
+  if (canvas) {
+    const ctx = canvas.getContext('2d');
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (ctx && !reduced) {
+      type P = { x: number; y: number; vx: number; vy: number };
+      let particles: P[] = [];
+      let w = 0, h = 0, dpr = 1;
+      const mouse = { x: -9999, y: -9999, active: false };
+
+      const resize = () => {
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        w = canvas.clientWidth;
+        h = canvas.clientHeight;
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        const density = Math.min(140, Math.floor((w * h) / 12000));
+        particles = Array.from({ length: density }, () => ({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          vx: (Math.random() - 0.5) * 0.35,
+          vy: (Math.random() - 0.5) * 0.35,
+        }));
+      };
+
+      window.addEventListener('resize', resize);
+      resize();
+
+      canvas.addEventListener('pointermove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        mouse.x = e.clientX - rect.left;
+        mouse.y = e.clientY - rect.top;
+        mouse.active = true;
+      });
+      canvas.addEventListener('pointerleave', () => {
+        mouse.active = false;
+        mouse.x = -9999;
+        mouse.y = -9999;
+      });
+
+      const LINK_DIST = 120;
+      const MOUSE_RADIUS = 140;
+
+      const tick = () => {
+        ctx.clearRect(0, 0, w, h);
+
+        for (const p of particles) {
+          if (mouse.active) {
+            const dx = p.x - mouse.x;
+            const dy = p.y - mouse.y;
+            const d2 = dx * dx + dy * dy;
+            if (d2 < MOUSE_RADIUS * MOUSE_RADIUS && d2 > 0.01) {
+              const d = Math.sqrt(d2);
+              const f = (MOUSE_RADIUS - d) / MOUSE_RADIUS;
+              p.vx += (dx / d) * f * 0.25;
+              p.vy += (dy / d) * f * 0.25;
+            }
+          }
+
+          p.vx *= 0.985;
+          p.vy *= 0.985;
+          p.x += p.vx;
+          p.y += p.vy;
+
+          if (p.x < 0) p.x += w;
+          else if (p.x > w) p.x -= w;
+          if (p.y < 0) p.y += h;
+          else if (p.y > h) p.y -= h;
+        }
+
+        ctx.lineWidth = 1;
+        for (let i = 0; i < particles.length; i++) {
+          const a = particles[i];
+          for (let j = i + 1; j < particles.length; j++) {
+            const b = particles[j];
+            const dx = a.x - b.x;
+            const dy = a.y - b.y;
+            const d2 = dx * dx + dy * dy;
+            if (d2 < LINK_DIST * LINK_DIST) {
+              const alpha = 1 - Math.sqrt(d2) / LINK_DIST;
+              ctx.strokeStyle = `rgba(52, 152, 219, ${alpha * 0.35})`;
+              ctx.beginPath();
+              ctx.moveTo(a.x, a.y);
+              ctx.lineTo(b.x, b.y);
+              ctx.stroke();
+            }
+          }
+        }
+
+        ctx.fillStyle = 'rgba(241, 245, 249, 0.85)';
+        for (const p of particles) {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 1.4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        requestAnimationFrame(tick);
+      };
+      tick();
+    }
+  }
+</script>

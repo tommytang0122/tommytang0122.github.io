@@ -1,0 +1,158 @@
+---
+import { getCollection, render } from 'astro:content';
+
+const projects = (await getCollection('projects')).sort(
+  (a, b) => (a.data.order ?? 0) - (b.data.order ?? 0) || (a.data.date < b.data.date ? 1 : -1),
+);
+
+const engines = Array.from(new Set(projects.map((p) => p.data.engine)));
+---
+
+<section id="projects" class="bg-[var(--color-bg-alt)] py-24">
+  <div class="mx-auto max-w-6xl px-6">
+    <div class="flex flex-wrap items-end justify-between gap-6">
+      <h2 class="heading reveal">Projects</h2>
+      <div class="reveal flex flex-wrap gap-2" role="toolbar" aria-label="Filter by engine">
+        <button data-filter="all" class="engine-filter is-active">All</button>
+        {
+          engines.map((e) => (
+            <button data-filter={e} class="engine-filter">
+              {e}
+            </button>
+          ))
+        }
+      </div>
+    </div>
+
+    <div id="project-grid" class="mt-12 grid gap-8 md:grid-cols-2">
+      {
+        projects.map(async (p) => {
+          const { Content } = await render(p);
+          return (
+            <article
+              class="reveal project-card group flex flex-col overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-lg transition hover:-translate-y-1 hover:shadow-2xl"
+              data-engine={p.data.engine}
+            >
+              {p.data.cover && (
+                <div class="relative aspect-[16/9] overflow-hidden bg-black/40">
+                  <img
+                    src={p.data.cover}
+                    alt={p.data.title}
+                    loading="lazy"
+                    decoding="async"
+                    class="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                  />
+                </div>
+              )}
+              <div class="flex flex-1 flex-col p-6">
+                <div class="flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.15em] text-[var(--color-muted)]">
+                  <span class="rounded-full border border-[var(--color-border)] px-2 py-0.5">
+                    {p.data.engine}
+                  </span>
+                  <span class="rounded-full border border-[var(--color-border)] px-2 py-0.5">
+                    {p.data.category}
+                  </span>
+                </div>
+                <h3 class="mt-3 text-xl">{p.data.title}</h3>
+                <p class="mt-1 text-sm text-[var(--color-base)] font-medium">
+                  {p.data.role.join(' · ')}
+                </p>
+                <div class="prose prose-invert mt-3 flex-1 text-sm text-[var(--color-text)] max-w-none">
+                  <Content />
+                </div>
+                {p.data.highlights.length > 0 && (
+                  <ul class="mt-3 list-disc space-y-1 pl-5 text-sm text-[var(--color-text)]">
+                    {p.data.highlights.map((h) => (
+                      <li>{h}</li>
+                    ))}
+                  </ul>
+                )}
+                <div class="mt-5 flex flex-wrap gap-4 text-sm font-medium">
+                  {p.data.links.play && (
+                    <a
+                      href={p.data.links.play}
+                      target="_blank"
+                      rel="noopener"
+                      class="text-[var(--color-base)] hover:underline"
+                    >
+                      Play ↗
+                    </a>
+                  )}
+                  {p.data.links.video && (
+                    <a
+                      href={p.data.links.video}
+                      target="_blank"
+                      rel="noopener"
+                      class="text-[var(--color-base)] hover:underline"
+                    >
+                      Video ↗
+                    </a>
+                  )}
+                  {p.data.links.github && (
+                    <a
+                      href={p.data.links.github}
+                      target="_blank"
+                      rel="noopener"
+                      class="text-[var(--color-base)] hover:underline"
+                    >
+                      GitHub ↗
+                    </a>
+                  )}
+                  {p.data.links.site && (
+                    <a
+                      href={p.data.links.site}
+                      target="_blank"
+                      rel="noopener"
+                      class="text-[var(--color-base)] hover:underline"
+                    >
+                      Site ↗
+                    </a>
+                  )}
+                </div>
+              </div>
+            </article>
+          );
+        })
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .engine-filter {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 0.4rem 0.9rem;
+    border-radius: 9999px;
+    border: 1px solid var(--color-border);
+    color: var(--color-muted);
+    transition: all 0.15s ease;
+    cursor: pointer;
+  }
+  .engine-filter:hover {
+    color: var(--color-heading);
+    border-color: var(--color-base);
+  }
+  .engine-filter.is-active {
+    color: var(--color-heading);
+    background: var(--color-base);
+    border-color: var(--color-base);
+  }
+</style>
+
+<script>
+  const buttons = document.querySelectorAll<HTMLButtonElement>('.engine-filter');
+  const cards = document.querySelectorAll<HTMLElement>('.project-card');
+
+  buttons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const filter = btn.dataset.filter ?? 'all';
+      buttons.forEach((b) => b.classList.toggle('is-active', b === btn));
+      cards.forEach((card) => {
+        const match = filter === 'all' || card.dataset.engine === filter;
+        card.style.display = match ? '' : 'none';
+      });
+    });
+  });
+</script>
